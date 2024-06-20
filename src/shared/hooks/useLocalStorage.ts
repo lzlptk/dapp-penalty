@@ -1,23 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-const useLocalStorage = (key: string, defaultValue: string) => {
-  const [value, setValue] = useState(() => {
-    let currentValue;
-
+const useLocalStorage = <T>(key: string, defaultValue: T) => {
+  const [value, setValue] = useState<T>(() => {
     try {
-      currentValue = JSON.parse(localStorage.getItem(key) ?? String(defaultValue));
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
     } catch (error) {
-      currentValue = defaultValue;
+      console.error(`Error reading localStorage key "${key}":`, error);
+      return defaultValue;
     }
-
-    return currentValue;
   });
 
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [value, key]);
+  const setStoredValue = useCallback(
+    (newValue: T) => {
+      try {
+        setValue(newValue);
+        localStorage.setItem(key, JSON.stringify(newValue));
+      } catch (error) {
+        console.error(`Error setting localStorage key "${key}":`, error);
+      }
+    },
+    [key]
+  );
 
-  return [value, setValue];
+  useEffect(() => {
+    try {
+      const item = localStorage.getItem(key);
+      if (item) {
+        setValue(JSON.parse(item) as T);
+      }
+    } catch (error) {
+      console.error(`Error initializing localStorage key "${key}":`, error);
+    }
+  }, [key]);
+
+  return [value, setStoredValue] as [T, typeof setStoredValue];
 };
 
 export default useLocalStorage;
