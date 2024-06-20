@@ -3,9 +3,10 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@/features/auth/slices/authSlice';
 import { AppDispatch } from '@/app/store';
+import { useLocalStorage } from '@/shared';
 
 const Login = () => {
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useLocalStorage('user', '');
   const [password, setPassword] = useState<string>('');
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
