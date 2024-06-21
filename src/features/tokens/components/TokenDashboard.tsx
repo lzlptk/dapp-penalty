@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/app/store';
-import { suggestTransfer, approveTransfer, rejectTransfer } from '@/features/tokens/slices/tokenSlice';
+import { suggestTransfer, approveTransfer, rejectTransfer } from '@/features/tokens';
+import { logout } from '@/features/auth';
 
 const TokenDashboard = () => {
   const dispatch = useDispatch();
@@ -43,6 +44,12 @@ const TokenDashboard = () => {
     <div>
       <h2>Token Dashboard</h2>
       <p>Your balance: {userBalance}</p>
+      <button
+        type="button"
+        onClick={() => dispatch(logout())}
+      >
+        Logout
+      </button>
       <form onSubmit={handleSuggestTransfer}>
         <div>
           <label>Sender:</label>

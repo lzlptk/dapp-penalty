@@ -1,30 +1,27 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { localStorageUtil } from '@/shared';
+import type { AuthState } from '@/features/auth';
 
-interface AuthState {
-  username: string | null;
-  isLoggedIn: boolean;
-}
+const [initialUsername, setUsernameLocalStorage, removeUsernameLocalStorage] = localStorageUtil<string | null>(
+  'user',
+  null
+);
 
 const initialState: AuthState = {
-  username: null,
-  isLoggedIn: false,
+  username: initialUsername,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ username: string }>) => {
-      state.username = action.payload.username;
-      state.isLoggedIn = true;
-      localStorage.setItem('loggedInUser', action.payload.username);
-      localStorage.setItem('isLoggedIn', 'true');
+    login: (state, { payload: { username } }: PayloadAction<{ username: string }>) => {
+      state.username = username;
+      setUsernameLocalStorage(username);
     },
     logout: (state) => {
       state.username = null;
-      state.isLoggedIn = false;
-      localStorage.removeItem('loggedInUser');
-      localStorage.setItem('isLoggedIn', 'false');
+      removeUsernameLocalStorage();
     },
   },
 });

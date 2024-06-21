@@ -1,5 +1,5 @@
-import type { Token } from '@/features/tokens/types';
-import type { User } from '@/features/auth/types';
+import type { Token } from '@/features/tokens';
+import type { User } from '@/features/auth';
 
 export const adjustUserBalance = (username: string, tokens: Token[], initialBalance: number) => {
   let balance = initialBalance;

@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from '@/features/auth/slices/authSlice';
-import { setInitialBalance } from '@/features/tokens/slices/tokenSlice';
-import useLocalStorage from '@/shared/hooks/useLocalStorage';
-import { setUsersWithBalanceAdjustment } from '@/features/tokens/utils/tokenUtils';
-import type { User } from '@/features/auth/types';
-import type { Token } from '@/features/tokens/types';
+import { login, type User } from '@/features/auth';
+import { setInitialBalance, type Token, setUsersWithBalanceAdjustment } from '@/features/tokens';
+import { localStorageUtil } from '@/shared';
 
 const Login = () => {
-  const [username, setUsername] = useLocalStorage<string>('user', '');
+  const [username, setUsername] = localStorageUtil<string>('user', '');
   const [password, setPassword] = useState<string>('');
-  const [users, setUsers] = useLocalStorage<User[]>('users', []);
-  const [tokens] = useLocalStorage<Token[]>('tokens', []);
+  const [users, setUsers] = localStorageUtil<User[]>('users', []);
+  const [tokens] = localStorageUtil<Token[]>('tokens', []);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username && password) {
-      const updatedUsers = setUsersWithBalanceAdjustment(username, users, tokens, 10);
-      setUsers(updatedUsers); // Update local storage with the new users array
-      const user = updatedUsers.find((user) => user.username === username);
-      if (user) {
-        dispatch(setInitialBalance({ username: user.username, balance: user.tokenBalance }));
-      }
-      dispatch(login({ username }));
-      navigate('/');
-    } else {
+
+    if (!username || !password) {
       alert('Invalid');
+      return;
     }
+
+    const updatedUsers = setUsersWithBalanceAdjustment(username, users, tokens, 10);
+    setUsers(updatedUsers);
+
+    const user = updatedUsers.find((user) => user.username === username);
+    if (user) {
+      dispatch(setInitialBalance({ username: user.username, balance: user.tokenBalance }));
+    }
+    dispatch(login({ username }));
+    navigate('/');
   };
 
   return (

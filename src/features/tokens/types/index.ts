@@ -6,4 +6,9 @@ interface Token {
   tokenAmount: number;
 }
 
-export type { Token };
+interface TokenState {
+  balance: Record<string, number>;
+  transfers: Token[];
+}
+
+export type { Token, TokenState };

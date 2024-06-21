@@ -1,18 +1,18 @@
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import Login from '@/features/auth/components/Login';
-import TokenDashboard from '@/features/tokens/components/TokenDashboard';
-import PrivateRoute from '@/shared/components/PrivateRoute';
-import { RootState } from './store';
+import { Login } from '@/features/auth';
+import { TokenDashboard } from '@/features/tokens';
+import { AuthRedirect, PrivateRoute } from '@/shared';
+import { RootState } from '@/app/store';
 
 const App = () => {
-  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const isLoggedIn = !!useSelector((state: RootState) => state.auth.username);
 
   return (
     <Routes>
       <Route
         path="/login"
-        element={<Login />}
+        element={isLoggedIn ? <Navigate to="/" /> : <Login />}
       />
       <Route element={<PrivateRoute isLoggedIn={isLoggedIn} />}>
         <Route
@@ -26,10 +26,6 @@ const App = () => {
       />
     </Routes>
   );
-};
-
-const AuthRedirect = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
-  return isLoggedIn ? <Navigate to="/" /> : <Navigate to="/login" />;
 };
 
 export default App;

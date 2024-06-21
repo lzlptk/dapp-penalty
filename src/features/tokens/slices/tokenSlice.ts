@@ -1,22 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { updateUserBalance } from '@/features/tokens/utils/tokenUtils';
-
-interface Token {
-  sender: string;
-  recipient: string;
-  tokenAmount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  approver: string;
-}
-
-interface TokenState {
-  balance: Record<string, number>;
-  transfers: Token[];
-}
+import { updateUserBalance, type Token, type TokenState } from '@/features/tokens';
 
 const initialState: TokenState = {
   balance: {},
-  transfers: JSON.parse(localStorage.getItem('tokens') || '[]'),
+  transfers: JSON.parse(localStorage.getItem('tokens') ?? '[]'),
 };
 
 const saveTransfersToLocalStorage = (transfers: Token[]) => {

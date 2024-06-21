@@ -3,4 +3,8 @@ interface User {
   tokenBalance: number;
 }
 
-export type { User };
+interface AuthState {
+  username: string | null;
+}
+
+export type { User, AuthState };
