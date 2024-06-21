@@ -1,33 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login, type User } from '@/features/auth';
 import { setInitialBalance, type Token, setUsersWithBalanceAdjustment } from '@/features/tokens';
-import { localStorageUtil } from '@/shared';
+import { useLocalStorage } from '@/shared/';
 
 const Login = () => {
-  const [username, setUsernameValue] = useState<string>('');
+  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [users, setUsers] = useState<User[]>([]);
-  const [tokens, setTokens] = useState<Token[]>([]);
+  const [users, setUsers] = useLocalStorage<User[]>('users', []);
+  const [tokens] = useLocalStorage<Token[]>('tokens', []);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const [storedUsername] = localStorageUtil<string>('user', '');
-    const [storedUsers] = localStorageUtil<User[]>('users', []);
-    const [storedTokens] = localStorageUtil<Token[]>('tokens', []);
-    setUsernameValue(storedUsername);
-    setUsers(storedUsers);
-    setTokens(storedTokens);
-  }, []);
-
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUsername = e.target.value;
-    setUsernameValue(newUsername);
-    const [, setStoredUsername] = localStorageUtil<string>('user', '');
-    setStoredUsername(newUsername);
-  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +23,6 @@ const Login = () => {
 
     const updatedUsers = setUsersWithBalanceAdjustment(username, users, tokens, 10);
     setUsers(updatedUsers);
-    const [, setStoredUsers] = localStorageUtil<User[]>('users', []);
-    setStoredUsers(updatedUsers);
 
     const user = updatedUsers.find((user) => user.username === username);
     if (user) {
@@ -57,7 +39,7 @@ const Login = () => {
         <input
           type="text"
           value={username}
-          onChange={handleUsernameChange}
+          onChange={(e) => setUsername(e.target.value)}
         />
       </div>
       <div>
