@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login, type User } from '@/features/auth';
-import { setInitialBalance, type Token, setUsersWithBalanceAdjustment } from '@/features/tokens';
-import { useLocalStorage } from '@/shared/';
+import { login } from '@/features/auth';
+import { setInitialBalance } from '@/features/tokens';
+import { AppDispatch } from '@/app/store';
 
 const Login = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [users, setUsers] = useLocalStorage<User[]>('users', []);
-  const [tokens] = useLocalStorage<Token[]>('tokens', []);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -21,13 +19,7 @@ const Login = () => {
       return;
     }
 
-    const updatedUsers = setUsersWithBalanceAdjustment(username, users, tokens, 10);
-    setUsers(updatedUsers);
-
-    const user = updatedUsers.find((user) => user.username === username);
-    if (user) {
-      dispatch(setInitialBalance({ username: user.username, balance: user.tokenBalance }));
-    }
+    dispatch(setInitialBalance({ username }));
     dispatch(login({ username }));
     navigate('/');
   };

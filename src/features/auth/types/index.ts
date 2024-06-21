@@ -4,7 +4,9 @@ interface User {
 }
 
 interface AuthState {
-  username: string | null;
+  username: string;
+  balance: number;
+  isLoggedIn: boolean;
 }
 
 export type { User, AuthState };

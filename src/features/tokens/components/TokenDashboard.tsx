@@ -7,20 +7,19 @@ import { logout } from '@/features/auth';
 const TokenDashboard = () => {
   const dispatch = useDispatch();
   const username = useSelector((state: RootState) => state.auth.username);
-  const balance = useSelector((state: RootState) => state.tokens.balance);
+  const balance = useSelector((state: RootState) => state.tokens.balance[username]);
   const transfers = useSelector((state: RootState) => state.tokens.transfers);
 
-  const [sender, setSender] = useState<string>(username ?? '');
+  const [sender, setSender] = useState<string>(username);
   const [recipient, setRecipient] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
 
-  const userBalance = balance[username!] || 0;
+  const userBalance = balance ?? 0;
 
   const handleSuggestTransfer = (e: React.FormEvent) => {
     e.preventDefault();
     if (sender && recipient && amount > 0) {
-      const senderBalance = balance[sender] || 0;
-      if (amount > senderBalance) {
+      if (amount > userBalance) {
         alert('Transfer amount exceeds sender balance');
         return;
       }
@@ -29,15 +28,11 @@ const TokenDashboard = () => {
   };
 
   const handleApproveTransfer = (index: number) => {
-    if (username) {
-      dispatch(approveTransfer({ index, approver: username }));
-    }
+    dispatch(approveTransfer({ index, approver: username }));
   };
 
   const handleRejectTransfer = (index: number) => {
-    if (username) {
-      dispatch(rejectTransfer({ index, approver: username }));
-    }
+    dispatch(rejectTransfer({ index, approver: username }));
   };
 
   return (
