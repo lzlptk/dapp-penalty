@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main # Set a branch name to trigger deployment
-  pull_request:
 
 jobs:
   cache-and-install:
-    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -53,10 +51,8 @@ jobs:
           path: ./dist
   # Deploy job
   deploy:
-    name: Deploy
     # Add a dependency to the build job
     needs: cache-and-install
-    runs-on: ubuntu-latest
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
@@ -67,6 +63,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
 
     steps:
       - name: Download artifact
