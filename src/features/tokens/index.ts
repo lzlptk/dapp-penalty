@@ -8,7 +8,7 @@ export { default as tokenReducer } from './slices/tokenSlice';
 export { setInitialBalance, suggestTransfer, approveTransfer, rejectTransfer } from './slices/tokenSlice';
 
 // Utils
-export { adjustUserBalance, setUsersWithBalanceAdjustment, updateUserBalance } from './utils/tokenUtils';
+export { setUsersWithBalanceAdjustment } from './utils/tokenUtils';
 
 // Types
 export * from './types';

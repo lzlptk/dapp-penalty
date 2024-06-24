@@ -9,7 +9,7 @@ import type { User } from '@/features/auth';
  * @param {number} initialBalance - The initial balance of the user before adjustments.
  * @returns {number} - The adjusted balance of the user.
  */
-export const adjustUserBalance = (username: string, tokens: Token[], initialBalance: number): number => {
+const adjustUserBalance = (username: string, tokens: Token[], initialBalance: number): number => {
   let balance = initialBalance;
 
   tokens.forEach((token) => {
@@ -30,7 +30,7 @@ export const adjustUserBalance = (username: string, tokens: Token[], initialBala
  * @param {number} initialBalance - The initial balance of the user before adjustments.
  * @returns {User[]} - The updated list of users with the adjusted balance for the specified user.
  */
-export const setUsersWithBalanceAdjustment = (
+const setUsersWithBalanceAdjustment = (
   username: string,
   users: User[],
   tokens: Token[],
@@ -57,19 +57,4 @@ export const setUsersWithBalanceAdjustment = (
   }
 };
 
-/**
- * Updates the balance of a specific user and saves the updated user list.
- *
- * @param {string} username - The username of the user whose balance is being updated.
- * @param {number} amount - The amount to adjust the user's balance by.
- */
-export const updateUserBalance = (username: string, amount: number): void => {
-  const users = JSON.parse(localStorage.getItem('users') ?? '[]') as User[];
-  const updatedUsers = users.map((user) => {
-    if (user.username === username) {
-      return { ...user, tokenBalance: user.tokenBalance + amount };
-    }
-    return user;
-  });
-  localStorage.setItem('users', JSON.stringify(updatedUsers));
-};
+export { setUsersWithBalanceAdjustment };
