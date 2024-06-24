@@ -6,7 +6,7 @@ import path from 'path';
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
   // This is for GitHub Pages
-  base: mode === 'production' ? '/dapp-penalty/' : '/',
+  base: mode === 'production' ? './' : '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

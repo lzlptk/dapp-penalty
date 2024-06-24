@@ -7,7 +7,7 @@ import './index.scss';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter basename={import.meta.env.MODE === 'production' ? '/dapp-penalty' : '/'}>
       <App />
     </BrowserRouter>
   </Provider>
