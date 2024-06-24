@@ -38,7 +38,9 @@ const TokenDashboard = () => {
   return (
     <div>
       <h2>Token Dashboard</h2>
-      <p>Your balance: {userBalance}</p>
+      <p>
+        {username} Your balance: {userBalance}
+      </p>
       <button
         type="button"
         onClick={() => dispatch(logout())}
