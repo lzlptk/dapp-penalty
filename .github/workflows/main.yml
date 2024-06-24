@@ -76,5 +76,4 @@ jobs:
       - name: Publish to GitHub Pages 🚀
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          name: production-files
+        artifact_name: production-files
