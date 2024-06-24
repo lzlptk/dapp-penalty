@@ -68,10 +68,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
-    # Specify runner + deployment step
-    runs-on: ubuntu-latest
     steps:
-    - name: Download artifact
+      - name: Download artifact
         uses: actions/download-artifact@v3
         with:
           name: production-files
