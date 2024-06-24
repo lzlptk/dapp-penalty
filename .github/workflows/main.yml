@@ -47,7 +47,7 @@ jobs:
         run: pnpm build
 
       - name: Upload production-ready build files
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           name: github-pages
           path: dist
