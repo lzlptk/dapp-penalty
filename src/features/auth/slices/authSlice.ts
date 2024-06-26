@@ -1,16 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { localStorageUtil } from '@/shared';
-import { type User, type AuthState } from '@/features/auth';
-
-const [initialUsername] = localStorageUtil<string>('user', '');
-const [initialUsers] = localStorageUtil<{ username: string; tokenBalance: number }[]>('users', []);
-
-const initialBalance = initialUsers.find((user: User) => user.username === initialUsername)?.tokenBalance ?? 0;
+import { type AuthState } from '@/features/auth';
 
 const initialState: AuthState = {
-  username: initialUsername,
-  balance: initialBalance,
-  isLoggedIn: !!initialUsername,
+  username: '',
+  balance: 0,
+  isLoggedIn: false,
 };
 
 const authSlice = createSlice({
@@ -18,43 +13,48 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Logs in a user by setting the username, balance, and isLoggedIn state.
-     * Also updates the username in localStorage.
+     * Logs in a user by setting the username and login status.
+     * Updates the username in localStorage.
      *
-     * @param {AuthState} state - The current state of authentication.
-     * @param {PayloadAction<{ username: string; balance?: number }>} action - The action to be dispatched.
-     * @param {string} action.payload.username - The username of the user logging in.
-     * @param {number} [action.payload.balance=10] - The initial token balance of the user. Defaults to 10 if not provided.
+     * @param {AuthState} state - The current auth state.
+     * @param {PayloadAction<{ username: string }>} action - The login action.
      */
-    login: (
-      state: AuthState,
-      { payload: { username, balance = 10 } }: PayloadAction<{ username: string; balance?: number }>
-    ) => {
+    login: (state: AuthState, { payload: { username } }: PayloadAction<{ username: string }>) => {
       state.username = username;
-      state.balance = balance;
       state.isLoggedIn = true;
       const [, setUsernameLocalStorage] = localStorageUtil<string>('user', '');
 
-      // This is where it would be ideal to communicate with the backend to authenticate the user.
+      // Ideally, communicate with the backend to authenticate the user and set a JWT
       setUsernameLocalStorage(username);
     },
     /**
-     * Logs out a user by resetting the username, balance, and isLoggedIn state.
-     * Also removes the username from localStorage.
+     * Logs out a user by resetting the username and login status.
+     * Removes the username from localStorage.
      *
-     * @param {AuthState} state - The current state of authentication.
+     * @param {AuthState} state - The current auth state.
      */
     logout: (state: AuthState) => {
       state.username = '';
-      state.balance = 0;
       state.isLoggedIn = false;
       const [, , removeUsernameLocalStorage] = localStorageUtil<string | null>('user', null);
 
-      // This is where it would be ideal to communicate with the backend to log out the user.
+      // Ideally, communicate with the backend to log out the user.
       removeUsernameLocalStorage();
+    },
+    /**
+     * Checks if a user is authenticated by reading the username from localStorage.
+     * Updates the state based on the presence of a username.
+     *
+     * @param {AuthState} state - The current auth state.
+     */
+    checkAuth: (state: AuthState) => {
+      const [username] = localStorageUtil<string>('user', '');
+
+      state.username = username || '';
+      state.isLoggedIn = !!username;
     },
   },
 });
 
-export const { login, logout } = authSlice.actions;
+export const { login, logout, checkAuth } = authSlice.actions;
 export default authSlice.reducer;

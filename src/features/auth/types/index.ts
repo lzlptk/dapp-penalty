@@ -1,12 +1,12 @@
 interface User {
   username: string;
-  tokenBalance: number;
+  balance: number;
 }
 
-interface AuthState {
-  username: string;
-  balance: number;
+interface LoggedInState {
   isLoggedIn: boolean;
 }
+
+type AuthState = User & LoggedInState;
 
 export type { User, AuthState };

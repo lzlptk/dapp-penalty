@@ -7,7 +7,7 @@ interface Token {
 }
 
 interface TokenState {
-  balance: Record<string, number>;
+  balances: Record<string, number>;
   transfers: Token[];
 }
 

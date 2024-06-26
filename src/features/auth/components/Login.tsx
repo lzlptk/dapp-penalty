@@ -19,8 +19,8 @@ const Login = () => {
       return;
     }
 
-    dispatch(setInitialBalance({ username }));
     dispatch(login({ username }));
+    dispatch(setInitialBalance({ username }));
     navigate('/');
   };
 

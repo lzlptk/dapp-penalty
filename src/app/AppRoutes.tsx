@@ -2,11 +2,18 @@ import { Login } from '@/features/auth';
 import { TokenDashboard } from '@/features/tokens';
 import { AuthRedirect, PrivateRoute } from '@/shared';
 import { Route, Routes, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/app/store';
+import { useEffect } from 'react';
+import { checkAuth } from '@/features/auth';
 
 const AppRoutes = () => {
   const isLoggedIn = !!useSelector((state: RootState) => state.auth.username);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   return (
     <Routes>

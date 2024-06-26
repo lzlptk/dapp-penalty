@@ -1,27 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { localStorageUtil } from '@/shared';
-import { setUsersWithBalanceAdjustment, type Token, type TokenState } from '@/features/tokens';
-
-const [initialTransfers] = localStorageUtil<Token[]>('tokens', []);
-const [initialUsers] = localStorageUtil<{ username: string; tokenBalance: number }[]>('users', []);
+import { type Token, type TokenState } from '@/features/tokens';
+import { type User } from '@/features/auth';
 
 const initialState: TokenState = {
-  balance: initialUsers.reduce(
-    (acc, user) => {
-      acc[user.username] = user.tokenBalance;
-      return acc;
-    },
-    {} as Record<string, number>
-  ),
-  transfers: initialTransfers,
-};
-
-const saveTransfersToLocalStorage = (transfers: Token[]) => {
-  localStorage.setItem('tokens', JSON.stringify(transfers));
-};
-
-const saveUsersToLocalStorage = (users: { username: string; tokenBalance: number }[]) => {
-  localStorage.setItem('users', JSON.stringify(users));
+  balances: {},
+  transfers: [],
 };
 
 const tokenSlice = createSlice({
@@ -29,57 +13,71 @@ const tokenSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Adjusts the token balance of a specific user and updates the users list.
-     *
-     * @param {TokenState} state - The current state of the tokens.
-     * @param {PayloadAction<{ username: string; balance: number }>} action - The action to be dispatched.
-     * @param {string} action.payload.username - The username of the user whose balance is to be adjusted.
-     * @param {number} action.payload.balance - The new balance for the user.
-     */
-    adjustUserBalance: (state: TokenState, action: PayloadAction<{ username: string; balance: number }>) => {
-      const { username, balance } = action.payload;
-      state.balance[username] = balance;
-
-      const [users] = localStorageUtil<{ username: string; tokenBalance: number }[]>('users', []);
-      const updatedUsers = users.map((user) =>
-        user.username === username ? { ...user, tokenBalance: balance } : user
-      );
-
-      // This is where it would be ideal to communicate with the backend to update the user's balance.
-      saveUsersToLocalStorage(updatedUsers);
-    },
-    /**
      * Sets the initial balance for a new user or updates an existing user's balance if they already exist.
      *
-     * @param {TokenState} state - The current state of the tokens.
-     * @param {PayloadAction<{ username: string; initialBalance?: number }>} action - The action to be dispatched.
-     * @param {string} action.payload.username - The username of the user whose initial balance is to be set.
-     * @param {number} [action.payload.initialBalance=10] - The initial balance for the user. Defaults to 10 if not provided.
+     * @param {TokenState} state - The current token state.
+     * @param {PayloadAction<{ username: string }>} action - The action payload with the username.
      */
-    setInitialBalance: (state: TokenState, action: PayloadAction<{ username: string; initialBalance?: number }>) => {
-      const { username, initialBalance = 10 } = action.payload;
-      const [users, setUsers] = localStorageUtil<{ username: string; tokenBalance: number }[]>('users', []);
+    setInitialBalance: (state: TokenState, action: PayloadAction<{ username: string }>) => {
+      const { username } = action.payload;
+      const [users, setUsers] = localStorageUtil<User[]>('users', []);
       const [tokens] = localStorageUtil<Token[]>('tokens', []);
-      const updatedUsers = setUsersWithBalanceAdjustment(username, users, tokens, initialBalance);
+      const userExists = users.some((user) => user.username === username);
+      const balance = tokens.reduce((acc, token) => {
+        if (token.recipient === username && token.status === 'approved') {
+          return acc + token.tokenAmount;
+        }
+        return acc;
+      }, 0);
 
-      // This is where it would be ideal to communicate with the backend to create a new user with a balance.
-      setUsers(updatedUsers);
-
-      const user = updatedUsers.find((user) => user.username === username);
-      if (user) {
-        state.balance[username] = user.tokenBalance;
-      } else {
-        state.balance[username] = initialBalance;
+      if (userExists) {
+        return;
       }
+
+      const defaultBalance = 10;
+      let updatedUsers;
+
+      if (balance) {
+        updatedUsers = [...users, { username, balance: balance + defaultBalance }];
+        state.balances[username] = balance + defaultBalance;
+      } else {
+        updatedUsers = [...users, { username, balance: defaultBalance }];
+        state.balances[username] = defaultBalance;
+      }
+
+      setUsers(updatedUsers);
+      console.log('Added new user with balance adjustment:', { username, balance });
     },
     /**
-     * Suggests a transfer of tokens from one user to another and marks the transfer as pending.
+     * Sets the balances from the initial list of users stored in localStorage.
      *
-     * @param {TokenState} state - The current state of the tokens.
-     * @param {PayloadAction<{ sender: string; recipient: string; amount: number }>} action - The action to be dispatched.
-     * @param {string} action.payload.sender - The username of the user sending the tokens.
-     * @param {string} action.payload.recipient - The username of the user receiving the tokens.
-     * @param {number} action.payload.amount - The amount of tokens to be transferred.
+     * @param {TokenState} state - The current token state.
+     */
+    setBalances: (state: TokenState) => {
+      const [initialUsers] = localStorageUtil<User[]>('users', []);
+
+      state.balances = initialUsers.reduce(
+        (acc, user) => {
+          acc[user.username] = user.balance;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+    },
+    /**
+     * Loads the initial list of transfers from localStorage.
+     *
+     * @param {TokenState} state - The current token state.
+     */
+    setTransfers: (state: TokenState) => {
+      const [initialTransfers] = localStorageUtil<Token[]>('tokens', []);
+      state.transfers = initialTransfers;
+    },
+    /**
+     * Suggests a transfer of tokens from one user to another and marks it as pending.
+     *
+     * @param {TokenState} state - The current token state.
+     * @param {PayloadAction<{ sender: string; recipient: string; amount: number }>} action - The action payload with transfer details.
      */
     suggestTransfer: (
       state: TokenState,
@@ -92,67 +90,72 @@ const tokenSlice = createSlice({
         status: 'pending',
         approver: '',
       };
+      const [, setTransfers] = localStorageUtil<Token[]>('tokens', []);
       state.transfers.push(newTransfer);
 
-      // This is where it would be ideal to communicate with the backend to save the suggested transfer.
-      saveTransfersToLocalStorage(state.transfers);
+      // Ideally, this is where you would communicate with the backend to save the suggested transfer.
+      setTransfers(state.transfers);
     },
     /**
-     * Approves a pending transfer of tokens, updates the balances of the sender and recipient, and saves the changes.
+     * Approves a pending transfer, updates balances, and saves the changes.
      *
-     * @param {TokenState} state - The current state of the tokens.
-     * @param {PayloadAction<{ index: number; approver: string }>} action - The action to be dispatched.
-     * @param {number} action.payload.index - The index of the transfer in the transfers array.
-     * @param {string} action.payload.approver - The username of the user approving the transfer.
+     * @param {TokenState} state - The current token state.
+     * @param {PayloadAction<{ index: number; approver: string }>} action - The action payload with transfer index and approver.
      */
     approveTransfer: (state: TokenState, action: PayloadAction<{ index: number; approver: string }>) => {
       const { index, approver } = action.payload;
       const transfer = state.transfers[index];
-      if (transfer && state.balance[transfer.sender] >= transfer.tokenAmount) {
-        transfer.status = 'approved';
-        transfer.approver = approver;
-        state.balance[transfer.sender] -= transfer.tokenAmount;
-        state.balance[transfer.recipient] = (state.balance[transfer.recipient] || 0) + transfer.tokenAmount;
 
-        const [users] = localStorageUtil<{ username: string; tokenBalance: number }[]>('users', []);
-        const updatedUsers = users.map((user) => {
-          if (user.username === transfer.sender) {
-            return { ...user, tokenBalance: user.tokenBalance - transfer.tokenAmount };
-          } else if (user.username === transfer.recipient) {
-            return { ...user, tokenBalance: (user.tokenBalance || 0) + transfer.tokenAmount };
-          }
-          return user;
-        });
-
-        // This is where it would be ideal to communicate with the backend to update the user balances.
-        saveUsersToLocalStorage(updatedUsers);
-        saveTransfersToLocalStorage(state.transfers);
-      } else {
+      if (!transfer || state.balances[transfer.sender] < transfer.tokenAmount) {
         alert('Sender does not have enough balance to approve the transfer.');
+        return;
       }
+
+      transfer.status = 'approved';
+      transfer.approver = approver;
+      state.balances[transfer.sender] -= transfer.tokenAmount;
+      state.balances[transfer.recipient] = (state.balances[transfer.recipient] || 0) + transfer.tokenAmount;
+
+      const [users, setUsers] = localStorageUtil<User[]>('users', []);
+      const [, setTransfers] = localStorageUtil<Token[]>('tokens', []);
+      const updatedUsers = users.map((user) => {
+        if (user.username === transfer.sender) {
+          return { ...user, balance: user.balance - transfer.tokenAmount };
+        } else if (user.username === transfer.recipient) {
+          return { ...user, balance: (user.balance || 0) + transfer.tokenAmount };
+        }
+        return user;
+      });
+
+      // Ideally, this is where you would communicate with the backend to update the user balances and transfer states.
+      setUsers(updatedUsers);
+      setTransfers(state.transfers);
     },
     /**
-     * Rejects a pending transfer of tokens and marks it as rejected.
+     * Rejects a pending transfer and marks it as rejected.
      *
-     * @param {TokenState} state - The current state of the tokens.
-     * @param {PayloadAction<{ index: number; approver: string }>} action - The action to be dispatched.
-     * @param {number} action.payload.index - The index of the transfer in the transfers array.
-     * @param {string} action.payload.approver - The username of the user rejecting the transfer.
+     * @param {TokenState} state - The current token state.
+     * @param {PayloadAction<{ index: number; approver: string }>} action - The action payload with transfer index and approver.
      */
     rejectTransfer: (state: TokenState, action: PayloadAction<{ index: number; approver: string }>) => {
       const { index, approver } = action.payload;
+      const [, setTransfers] = localStorageUtil<Token[]>('tokens', []);
       const transfer = state.transfers[index];
-      if (transfer) {
-        transfer.status = 'rejected';
-        transfer.approver = approver;
 
-        // This is where it would be ideal to communicate with the backend to update the transfer status.
-        saveTransfersToLocalStorage(state.transfers);
+      if (!transfer) {
+        alert('Transfer does not exist.');
+        return;
       }
+
+      transfer.status = 'rejected';
+      transfer.approver = approver;
+
+      // Ideally, this is where you would communicate with the backend to update the transfer status.
+      setTransfers(state.transfers);
     },
   },
 });
 
-export const { adjustUserBalance, setInitialBalance, suggestTransfer, approveTransfer, rejectTransfer } =
+export const { setInitialBalance, setBalances, setTransfers, suggestTransfer, approveTransfer, rejectTransfer } =
   tokenSlice.actions;
 export default tokenSlice.reducer;

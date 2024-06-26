@@ -1,30 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/app/store';
-import { suggestTransfer, approveTransfer, rejectTransfer } from '@/features/tokens';
+import { suggestTransfer, approveTransfer, rejectTransfer, setTransfers, setBalances } from '@/features/tokens';
 import { logout } from '@/features/auth';
 
 const TokenDashboard = () => {
   const dispatch = useDispatch();
   const username = useSelector((state: RootState) => state.auth.username);
-  const balance = useSelector((state: RootState) => state.tokens.balance[username]);
+  const balance = useSelector((state: RootState) => state.tokens.balances[username]);
   const transfers = useSelector((state: RootState) => state.tokens.transfers);
-
   const [sender, setSender] = useState<string>(username);
   const [recipient, setRecipient] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
 
-  const userBalance = balance ?? 0;
-
   const handleSuggestTransfer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sender && recipient && amount > 0) {
-      if (amount > userBalance) {
-        alert('Transfer amount exceeds sender balance');
-        return;
-      }
-      dispatch(suggestTransfer({ sender, recipient, amount }));
-    }
+
+    dispatch(suggestTransfer({ sender, recipient, amount }));
   };
 
   const handleApproveTransfer = (index: number) => {
@@ -35,11 +27,16 @@ const TokenDashboard = () => {
     dispatch(rejectTransfer({ index, approver: username }));
   };
 
+  useEffect(() => {
+    dispatch(setTransfers());
+    dispatch(setBalances());
+  }, [dispatch, username]);
+
   return (
     <div>
       <h2>Token Dashboard</h2>
       <p>
-        {username} Your balance: {userBalance}
+        {username} Your balance: {balance}
       </p>
       <button
         type="button"
@@ -68,11 +65,16 @@ const TokenDashboard = () => {
           <label>Amount:</label>
           <input
             type="number"
-            value={amount}
+            value={amount === 0 ? '' : amount}
             onChange={(e) => setAmount(Number(e.target.value))}
           />
         </div>
-        <button type="submit">Suggest Transfer</button>
+        <button
+          type="submit"
+          disabled={!sender || !recipient}
+        >
+          Suggest Transfer
+        </button>
       </form>
       <h3>Pending Transfers</h3>
       <ul>
